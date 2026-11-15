@@ -1,0 +1,18 @@
+{
+  "name": "DuoBudżet — Grzegorz & Asia",
+  "short_name": "DuoBudżet",
+  "description": "Wspólny system zarządzania budżetem, wydatkami i celami dla Grzegorza i Asi",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "./logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

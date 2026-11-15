@@ -1,0 +1,1430 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>DuoBudżet — Grzegorz &amp; Asia</title>
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" type="image/svg+xml" href="./logo.svg" />
+  <link rel="apple-touch-icon" href="./logo.svg" />
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+  <style>
+    :root {
+      --bg-main: #0b1120;
+      --bg-card: #131c31;
+      --bg-input: #1e293b;
+      --border: #27354f;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --emerald: #10b981;
+      --emerald-dark: #059669;
+      --sky: #38bdf8;
+      --rose: #f43f5e;
+      --amber: #f59e0b;
+      --violet: #a78bfa;
+      --radius: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      min-height: 100vh;
+      line-height: 1.5;
+      padding-bottom: 80px;
+    }
+
+    /* EKRAN LOGOWANIA */
+    #auth-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: radial-gradient(circle at top right, #172554 0%, var(--bg-main) 60%);
+    }
+
+    .auth-box {
+      width: 100%;
+      max-width: 420px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px 26px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    }
+
+    .auth-logo {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    .auth-logo img {
+      width: 76px;
+      height: 76px;
+      margin-bottom: 12px;
+      border-radius: 18px;
+      box-shadow: 0 8px 24px rgba(16, 185, 129, 0.25);
+    }
+
+    .auth-logo h1 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .auth-logo p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 11px 14px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text-main);
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--emerald);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 18px;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.92rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-primary {
+      width: 100%;
+      background: linear-gradient(135deg, var(--emerald), var(--emerald-dark));
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.08);
+    }
+
+    .btn-secondary {
+      background: var(--bg-input);
+      color: var(--text-main);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--sky);
+    }
+
+    .btn-danger {
+      background: rgba(244, 63, 94, 0.15);
+      color: var(--rose);
+      border: 1px solid rgba(244, 63, 94, 0.3);
+      padding: 6px 10px;
+      font-size: 0.8rem;
+    }
+
+    .config-toggle {
+      margin-top: 16px;
+      text-align: center;
+    }
+
+    .config-toggle button {
+      background: none;
+      border: none;
+      color: var(--sky);
+      font-size: 0.8rem;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    .alert-error {
+      background: rgba(244, 63, 94, 0.15);
+      border: 1px solid var(--rose);
+      color: #fda4af;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 0.84rem;
+      margin-bottom: 14px;
+      display: none;
+    }
+
+    /* GŁÓWNA APLIKACJA */
+    #app-screen {
+      display: none;
+    }
+
+    header.topbar {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: rgba(11, 17, 32, 0.88);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 20px;
+    }
+
+    .topbar-inner {
+      max-width: 1240px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand img {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+    }
+
+    .brand-title {
+      font-weight: 800;
+      font-size: 1.1rem;
+      line-height: 1.1;
+    }
+
+    .brand-sub {
+      font-size: 0.74rem;
+      color: var(--emerald);
+      font-weight: 600;
+    }
+
+    .topbar-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .month-picker {
+      width: auto;
+      padding: 8px 12px;
+      font-weight: 600;
+      font-size: 0.88rem;
+    }
+
+    .container {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* ZAKŁADKI NAWIGACYJNE */
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      margin-bottom: 20px;
+    }
+
+    .tab-btn {
+      padding: 10px 16px;
+      border-radius: 10px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.88rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: 0.15s;
+    }
+
+    .tab-btn.active {
+      background: var(--emerald);
+      color: #fff;
+      border-color: var(--emerald);
+    }
+
+    /* KARTY KPI */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+
+    .kpi-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+    }
+
+    .kpi-label {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .kpi-value {
+      font-size: 1.55rem;
+      font-weight: 800;
+      margin-top: 6px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .kpi-sub {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .text-emerald { color: var(--emerald); }
+    .text-rose { color: var(--rose); }
+    .text-sky { color: var(--sky); }
+    .text-amber { color: var(--amber); }
+
+    /* UKŁAD SIATKI */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    @media (max-width: 940px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      gap: 10px;
+    }
+
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    /* PRZEŁĄCZNIK TYPU OPERACJI */
+    .type-switch {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      background: var(--bg-input);
+      padding: 4px;
+      border-radius: 10px;
+      margin-bottom: 14px;
+      border: 1px solid var(--border);
+    }
+
+    .type-switch button {
+      padding: 8px;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--text-muted);
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .type-switch button.active-expense {
+      background: var(--rose);
+      color: #fff;
+    }
+
+    .type-switch button.active-income {
+      background: var(--emerald);
+      color: #fff;
+    }
+
+    /* LISTA TRANSAKCJI */
+    .tx-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .tx-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      background: rgba(30, 41, 59, 0.55);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+
+    .tx-info {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .tx-title {
+      font-weight: 700;
+      font-size: 0.94rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .tx-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+      font-size: 0.76rem;
+      color: var(--text-muted);
+    }
+
+    .badge {
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.7rem;
+    }
+
+    .badge-grzegorz { background: rgba(56, 189, 248, 0.18); color: var(--sky); }
+    .badge-asia { background: rgba(167, 139, 250, 0.18); color: var(--violet); }
+    .badge-scope { background: rgba(148, 163, 184, 0.16); color: #cbd5e1; }
+
+    .tx-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .tx-amount {
+      font-weight: 800;
+      font-size: 0.98rem;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    /* KOPERTY / PASKI POSTĘPU */
+    .envelope-item {
+      margin-bottom: 16px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .envelope-item:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .env-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+      font-size: 0.9rem;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 10px;
+      background: var(--bg-input);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.3s ease;
+    }
+
+    /* CELE OSZCZĘDNOŚCIOWE */
+    .goals-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 16px;
+    }
+
+    .goal-card {
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .goal-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .chart-wrapper {
+      position: relative;
+      height: 270px;
+      width: 100%;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    #install-banner {
+      display: none;
+      background: linear-gradient(90deg, rgba(16, 185, 129, 0.2), rgba(56, 189, 248, 0.2));
+      border: 1px solid var(--emerald);
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 18px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==================== EKRAN LOGOWANIA ==================== -->
+  <section id="auth-screen">
+    <div class="auth-box">
+      <div class="auth-logo">
+        <img src="./logo.svg" alt="DuoBudżet Logo" />
+        <h1>DuoBudżet</h1>
+        <p>Wspólne finanse: Grzegorz &amp; Asia</p>
+      </div>
+
+      <div id="auth-error" class="alert-error"></div>
+
+      <form id="login-form">
+        <div class="form-group">
+          <label for="login-email">Adres e-mail</label>
+          <input type="email" id="login-email" placeholder="grzegorz@duobudzet.pl" required autocomplete="email" />
+        </div>
+        <div class="form-group">
+          <label for="login-password">Hasło</label>
+          <input type="password" id="login-password" placeholder="••••••••" required autocomplete="current-password" />
+        </div>
+
+        <div id="supabase-config-fields" class="hidden">
+          <div class="form-group">
+            <label for="sb-url">Supabase Project URL</label>
+            <input type="url" id="sb-url" placeholder="https://mldcptxaownfevjwsvhb.supabase.co" />
+          </div>
+          <div class="form-group">
+            <label for="sb-key">Supabase Publishable Key</label>
+            <input type="text" id="sb-key" placeholder="sb_publishable_..." />
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="login-btn">Zaloguj się do budżetu</button>
+      </form>
+
+      <div class="config-toggle">
+        <button type="button" id="toggle-config-btn">Ustawienia połączenia Supabase</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== GŁÓWNA APLIKACJA ==================== -->
+  <section id="app-screen">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="brand">
+          <img src="./logo.svg" alt="Logo" />
+          <div>
+            <div class="brand-title">DuoBudżet</div>
+            <div class="brand-sub" id="logged-user-label">Połączono z chmurą</div>
+          </div>
+        </div>
+
+        <div class="topbar-controls">
+          <input type="month" id="month-filter" class="month-picker" title="Wybierz miesiąc" />
+          <button type="button" class="btn btn-secondary" id="export-csv-btn">Eksport CSV</button>
+          <button type="button" class="btn btn-secondary" id="logout-btn">Wyloguj</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="container">
+      <!-- Baner instalacji PWA -->
+      <div id="install-banner">
+        <div>
+          <strong>Zainstaluj DuoBudżet jako aplikację</strong>
+          <div style="font-size: 0.82rem; color: var(--text-muted);">Dodaj ikonę na pulpit komputera lub ekran telefonu.</div>
+        </div>
+        <button type="button" class="btn btn-primary" style="width: auto;" id="install-pwa-btn">Zainstaluj</button>
+      </div>
+
+      <!-- Kafelki podsumowania -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">Przychody (miesiąc)</div>
+          <div class="kpi-value text-emerald" id="kpi-income">0,00 zł</div>
+          <div class="kpi-sub" id="kpi-income-split">Grzegorz: 0 zł | Asia: 0 zł</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Wydatki (miesiąc)</div>
+          <div class="kpi-value text-rose" id="kpi-expense">0,00 zł</div>
+          <div class="kpi-sub" id="kpi-expense-split">Grzegorz: 0 zł | Asia: 0 zł</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Bilans miesiąca</div>
+          <div class="kpi-value text-sky" id="kpi-balance">0,00 zł</div>
+          <div class="kpi-sub" id="kpi-savings-rate">Stopa oszczędności: 0%</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Rozliczenie 50/50 (wspólne)</div>
+          <div class="kpi-value text-amber" id="kpi-settlement">Wyrównane</div>
+          <div class="kpi-sub" id="kpi-settlement-detail">Brak różnic we wspólnych wydatkach</div>
+        </div>
+      </div>
+
+      <!-- Zakładki -->
+      <div class="nav-tabs">
+        <button class="tab-btn active" data-tab="tab-overview">Pulpit i Transakcje</button>
+        <button class="tab-btn" data-tab="tab-envelopes">Planer i Limity (Koperty)</button>
+        <button class="tab-btn" data-tab="tab-goals">Cele Oszczędnościowe</button>
+        <button class="tab-btn" data-tab="tab-analytics">Analiza i Wykresy</button>
+      </div>
+
+      <!-- ZAKŁADKA 1: PULPIT I TRANSAKCJE -->
+      <div id="tab-overview" class="tab-content">
+        <div class="main-grid">
+          <!-- Formularz dodawania -->
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">Nowy wpis</h2>
+            </div>
+
+            <div class="type-switch">
+              <button type="button" id="btn-type-expense" class="active-expense">Wydatek (-)</button>
+              <button type="button" id="btn-type-income">Przychód (+)</button>
+            </div>
+
+            <form id="tx-form">
+              <input type="hidden" id="tx-type" value="expense" />
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="tx-amount">Kwota (PLN)</label>
+                  <input type="number" id="tx-amount" step="0.01" min="0.01" placeholder="0.00" required />
+                </div>
+                <div class="form-group">
+                  <label for="tx-date">Data</label>
+                  <input type="date" id="tx-date" required />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="tx-title">Opis / Sklep / Tytuł</label>
+                <input type="text" id="tx-title" placeholder="np. Zakupy Lidl, Paliwo Orlen, Wypłata" required />
+              </div>
+
+              <div class="form-group">
+                <label for="tx-category">Kategoria</label>
+                <select id="tx-category" required></select>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="tx-paid-by">Kto płaci / otrzymuje</label>
+                  <select id="tx-paid-by" required>
+                    <option value="Grzegorz">Grzegorz</option>
+                    <option value="Asia">Asia</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="tx-scope">Typ rozliczenia</label>
+                  <select id="tx-scope" required>
+                    <option value="shared_split">Wspólny (podział 50/50)</option>
+                    <option value="shared_pool">Wspólny (bez zwrotu)</option>
+                    <option value="personal_grzegorz">Osobisty — Grzegorz</option>
+                    <option value="personal_asia">Osobisty — Asia</option>
+                  </select>
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-primary">Zapisz operację</button>
+            </form>
+          </div>
+
+          <!-- Lista transakcji -->
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">Historia operacji</h2>
+              <select id="filter-person" style="width: auto; padding: 7px 10px; font-size: 0.84rem;">
+                <option value="ALL">Wszyscy</option>
+                <option value="Grzegorz">Tylko Grzegorz</option>
+                <option value="Asia">Tylko Asia</option>
+              </select>
+            </div>
+
+            <div id="tx-list" class="tx-list">
+              <p style="color: var(--text-muted); font-size: 0.9rem;">Ładowanie danych...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ZAKŁADKA 2: PLANER I KOPERTY -->
+      <div id="tab-envelopes" class="tab-content hidden">
+        <div class="main-grid">
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">Ustaw miesięczny limit</h2>
+            </div>
+            <form id="limit-form">
+              <div class="form-group">
+                <label for="limit-category">Nazwa kategorii</label>
+                <input type="text" id="limit-category" placeholder="np. Zakupy spożywcze" required list="category-suggestions" />
+                <datalist id="category-suggestions"></datalist>
+              </div>
+              <div class="form-group">
+                <label for="limit-value">Planowany budżet miesięczny (PLN)</label>
+                <input type="number" id="limit-value" step="10" min="0" placeholder="1500" required />
+              </div>
+              <button type="submit" class="btn btn-primary">Zapisz limit kategorii</button>
+            </form>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">Realizacja budżetu w wybranym miesiącu</h2>
+              <span id="total-planned-label" style="font-size: 0.85rem; color: var(--sky); font-weight: 700;"></span>
+            </div>
+            <div id="envelopes-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ZAKŁADKA 3: CELE OSZCZĘDNOŚCIOWE -->
+      <div id="tab-goals" class="tab-content hidden">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Dodaj nowy cel oszczędnościowy</h2>
+          </div>
+          <form id="goal-form" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; align-items: end;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label for="goal-name">Nazwa celu</label>
+              <input type="text" id="goal-name" placeholder="np. Remont 50m² Kotulin / Wesele" required />
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label for="goal-target">Kwota docelowa (PLN)</label>
+              <input type="number" id="goal-target" step="100" min="1" placeholder="20000" required />
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label for="goal-current">Już uzbierano (PLN)</label>
+              <input type="number" id="goal-current" step="10" min="0" value="0" required />
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label for="goal-deadline">Termin (opcjonalnie)</label>
+              <input type="date" id="goal-deadline" />
+            </div>
+            <button type="submit" class="btn btn-primary">Utwórz cel</button>
+          </form>
+        </div>
+
+        <div id="goals-grid" class="goals-grid"></div>
+      </div>
+
+      <!-- ZAKŁADKA 4: ANALIZA I WYKRESY -->
+      <div id="tab-analytics" class="tab-content hidden">
+        <div class="main-grid" style="grid-template-columns: 1fr 1fr;">
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">Struktura wydatków wg kategorii</h2>
+            </div>
+            <div class="chart-wrapper">
+              <canvas id="categoryChart"></canvas>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">Porównanie: Grzegorz vs Asia</h2>
+            </div>
+            <div class="chart-wrapper">
+              <canvas id="personChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </section>
+
+  <script>
+    // =========================================================================
+    // KONFIGURACJA POŁĄCZENIA Z SUPABASE (Projekt: DuoBudzet)
+    // =========================================================================
+    const DEFAULT_SUPABASE_URL = 'https://mldcptxaownfevjwsvhb.supabase.co';
+    const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_Pb2K5967AJnVqZRsdDyL9A_8kcbfavm';
+
+    let supabaseClient = null;
+    let currentUser = null;
+    let transactions = [];
+    let limits = [];
+    let goals = [];
+    let categoryChartInstance = null;
+    let personChartInstance = null;
+    let deferredInstallPrompt = null;
+
+    const INCOME_CATEGORIES = [
+      'Wynagrodzenie (etat)',
+      'Korepetycje / działalność',
+      'Premia / nadgodziny',
+      'Zwrot / prezent',
+      'Inny przychód'
+    ];
+
+    const SCOPE_LABELS = {
+      shared_split: 'Wspólny 50/50',
+      shared_pool: 'Wspólny (pula)',
+      personal_grzegorz: 'Osobisty: Grzegorz',
+      personal_asia: 'Osobisty: Asia'
+    };
+
+    // Rejestracja Service Workera (PWA)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      });
+    }
+
+    // Obsługa przycisku instalacji aplikacji z Chrome
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+      const banner = document.getElementById('install-banner');
+      if (banner) banner.style.display = 'flex';
+    });
+
+    document.getElementById('install-pwa-btn').addEventListener('click', async () => {
+      if (!deferredInstallPrompt) return;
+      deferredInstallPrompt.prompt();
+      await deferredInstallPrompt.userChoice;
+      deferredInstallPrompt = null;
+      document.getElementById('install-banner').style.display = 'none';
+    });
+
+    // Pobieranie konfiguracji Supabase
+    function getSupabaseCredentials() {
+      const savedUrl = localStorage.getItem('duobudzet_sb_url');
+      const savedKey = localStorage.getItem('duobudzet_sb_key');
+      const url = (savedUrl && savedUrl.startsWith('http')) ? savedUrl : DEFAULT_SUPABASE_URL;
+      const key = (savedKey && savedKey.length > 20) ? savedKey : DEFAULT_SUPABASE_ANON_KEY;
+      return { url, key };
+    }
+
+    function initSupabase() {
+      const { url, key } = getSupabaseCredentials();
+      document.getElementById('sb-url').value = url;
+      document.getElementById('sb-key').value = key;
+
+      if (!url.startsWith('http') || key.length < 20) {
+        document.getElementById('supabase-config-fields').classList.remove('hidden');
+        return false;
+      }
+
+      supabaseClient = window.supabase.createClient(url, key);
+      return true;
+    }
+
+    // Formatowanie waluty PLN
+    function formatPLN(amount) {
+      return new Intl.NumberFormat('pl-PL', {
+        style: 'currency',
+        currency: 'PLN'
+      }).format(Number(amount) || 0);
+    }
+
+    // Inicjalizacja dat
+    function initDefaultDates() {
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      document.getElementById('month-filter').value = `${yyyy}-${mm}`;
+      document.getElementById('tx-date').value = `${yyyy}-${mm}-${dd}`;
+    }
+
+    // Przełącznik ustawień Supabase na ekranie logowania
+    document.getElementById('toggle-config-btn').addEventListener('click', () => {
+      document.getElementById('supabase-config-fields').classList.toggle('hidden');
+    });
+
+    // Logowanie przez Supabase Auth
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const errorBox = document.getElementById('auth-error');
+      errorBox.style.display = 'none';
+
+      const customUrl = document.getElementById('sb-url').value.trim();
+      const customKey = document.getElementById('sb-key').value.trim();
+      if (customUrl && customKey) {
+        localStorage.setItem('duobudzet_sb_url', customUrl);
+        localStorage.setItem('duobudzet_sb_key', customKey);
+      }
+
+      if (!initSupabase()) {
+        errorBox.textContent = 'Uzupełnij poprawny Supabase Project URL oraz Publishable Key.';
+        errorBox.style.display = 'block';
+        return;
+      }
+
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+      const loginBtn = document.getElementById('login-btn');
+      loginBtn.disabled = true;
+      loginBtn.textContent = 'Logowanie...';
+
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+      loginBtn.disabled = false;
+      loginBtn.textContent = 'Zaloguj się do budżetu';
+
+      if (error) {
+        errorBox.textContent = 'Błąd logowania: ' + error.message;
+        errorBox.style.display = 'block';
+        return;
+      }
+
+      currentUser = data.user;
+      await enterApp();
+    });
+
+    // Wylogowanie
+    document.getElementById('logout-btn').addEventListener('click', async () => {
+      if (supabaseClient) await supabaseClient.auth.signOut();
+      document.getElementById('app-screen').style.display = 'none';
+      document.getElementById('auth-screen').style.display = 'flex';
+    });
+
+    // Uruchomienie aplikacji po autoryzacji
+    async function enterApp() {
+      document.getElementById('auth-screen').style.display = 'none';
+      document.getElementById('app-screen').style.display = 'block';
+
+      const email = currentUser?.email || '';
+      const who = email.toLowerCase().includes('asia') ? 'Asia' : 'Grzegorz';
+      document.getElementById('logged-user-label').textContent = `Zalogowano: ${email}`;
+      document.getElementById('tx-paid-by').value = who;
+
+      await loadAllData();
+      subscribeRealtime();
+    }
+
+    // Pobieranie wszystkich danych z Supabase
+    async function loadAllData() {
+      const [txRes, limRes, goalRes] = await Promise.all([
+        supabaseClient.from('budget_transactions').select('*').order('tx_date', { ascending: false }).order('created_at', { ascending: false }),
+        supabaseClient.from('budget_limits').select('*').order('category', { ascending: true }),
+        supabaseClient.from('budget_goals').select('*').order('created_at', { ascending: true })
+      ]);
+
+      transactions = txRes.data || [];
+      limits = limRes.data || [];
+      goals = goalRes.data || [];
+
+      populateCategorySelects();
+      renderAll();
+    }
+
+    // Subskrypcja zmian w czasie rzeczywistym (synchronizacja między telefonem Asi a Twoim)
+    function subscribeRealtime() {
+      supabaseClient
+        .channel('duobudzet-live')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'budget_transactions' }, loadAllData)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'budget_limits' }, loadAllData)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'budget_goals' }, loadAllData)
+        .subscribe();
+    }
+
+    // Przełączanie typu: Wydatek / Przychód
+    document.getElementById('btn-type-expense').addEventListener('click', () => {
+      document.getElementById('tx-type').value = 'expense';
+      document.getElementById('btn-type-expense').className = 'active-expense';
+      document.getElementById('btn-type-income').className = '';
+      populateCategorySelects();
+    });
+
+    document.getElementById('btn-type-income').addEventListener('click', () => {
+      document.getElementById('tx-type').value = 'income';
+      document.getElementById('btn-type-income').className = 'active-income';
+      document.getElementById('btn-type-expense').className = '';
+      populateCategorySelects();
+    });
+
+    function populateCategorySelects() {
+      const type = document.getElementById('tx-type').value;
+      const catSelect = document.getElementById('tx-category');
+      const datalist = document.getElementById('category-suggestions');
+
+      const expenseCats = limits.length > 0
+        ? limits.map(l => l.category)
+        : ['Zakupy spożywcze', 'Paliwo i auto', 'Rachunki i stałe', 'Remont i dom', 'Jedzenie na mieście', 'Inne'];
+
+      const list = type === 'expense' ? expenseCats : INCOME_CATEGORIES;
+      catSelect.innerHTML = list.map(c => `<option value="${c}">${c}</option>`).join('');
+      datalist.innerHTML = expenseCats.map(c => `<option value="${c}">`).join('');
+    }
+
+    // Dodawanie transakcji
+    document.getElementById('tx-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const payload = {
+        type: document.getElementById('tx-type').value,
+        amount: parseFloat(document.getElementById('tx-amount').value),
+        tx_date: document.getElementById('tx-date').value,
+        title: document.getElementById('tx-title').value.trim(),
+        category: document.getElementById('tx-category').value,
+        paid_by: document.getElementById('tx-paid-by').value,
+        scope: document.getElementById('tx-scope').value
+      };
+
+      const { error } = await supabaseClient.from('budget_transactions').insert([payload]);
+      if (error) {
+        alert('Błąd zapisu: ' + error.message);
+        return;
+      }
+
+      document.getElementById('tx-amount').value = '';
+      document.getElementById('tx-title').value = '';
+      await loadAllData();
+    });
+
+    // Usuwanie transakcji
+    async function deleteTransaction(id) {
+      if (!confirm('Usunąć ten wpis?')) return;
+      await supabaseClient.from('budget_transactions').delete().eq('id', id);
+      await loadAllData();
+    }
+
+    // Zapisywanie limitu kategorii (koperty)
+    document.getElementById('limit-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const category = document.getElementById('limit-category').value.trim();
+      const monthly_limit = parseFloat(document.getElementById('limit-value').value);
+
+      const { error } = await supabaseClient
+        .from('budget_limits')
+        .upsert({ category, monthly_limit, updated_at: new Date().toISOString() }, { onConflict: 'category' });
+
+      if (error) {
+        alert('Błąd zapisu limitu: ' + error.message);
+        return;
+      }
+
+      document.getElementById('limit-category').value = '';
+      document.getElementById('limit-value').value = '';
+      await loadAllData();
+    });
+
+    // Dodawanie celu oszczędnościowego
+    document.getElementById('goal-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const payload = {
+        name: document.getElementById('goal-name').value.trim(),
+        target_amount: parseFloat(document.getElementById('goal-target').value),
+        current_amount: parseFloat(document.getElementById('goal-current').value) || 0,
+        deadline: document.getElementById('goal-deadline').value || null
+      };
+
+      const { error } = await supabaseClient.from('budget_goals').insert([payload]);
+      if (error) {
+        alert('Błąd dodawania celu: ' + error.message);
+        return;
+      }
+
+      document.getElementById('goal-form').reset();
+      document.getElementById('goal-current').value = '0';
+      await loadAllData();
+    });
+
+    // Dopłata do celu oszczędnościowego
+    async function addGoalFunds(id, currentAmount) {
+      const input = prompt('Podaj kwotę dopłaty do celu (w zł):', '500');
+      if (input === null) return;
+      const add = parseFloat(input.replace(',', '.'));
+      if (isNaN(add) || add <= 0) return alert('Nieprawidłowa kwota.');
+
+      await supabaseClient
+        .from('budget_goals')
+        .update({ current_amount: Number(currentAmount) + add })
+        .eq('id', id);
+
+      await loadAllData();
+    }
+
+    async function deleteGoal(id) {
+      if (!confirm('Usunąć ten cel oszczędnościowy?')) return;
+      await supabaseClient.from('budget_goals').delete().eq('id', id);
+      await loadAllData();
+    }
+
+    // Nawigacja między zakładkami
+    document.querySelectorAll('.tab-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach((c) => c.classList.add('hidden'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.tab).classList.remove('hidden');
+        if (btn.dataset.tab === 'tab-analytics') renderCharts();
+      });
+    });
+
+    document.getElementById('month-filter').addEventListener('change', renderAll);
+    document.getElementById('filter-person').addEventListener('change', renderAll);
+
+    // Główne renderowanie widoku
+    function renderAll() {
+      const selectedMonth = document.getElementById('month-filter').value;
+      const personFilter = document.getElementById('filter-person').value;
+
+      const monthTx = transactions.filter((t) => t.tx_date && t.tx_date.startsWith(selectedMonth));
+
+      // Obliczenia KPI
+      let incG = 0, incA = 0, expG = 0, expA = 0;
+      let sharedPaidG = 0, sharedPaidA = 0;
+
+      monthTx.forEach((t) => {
+        const val = Number(t.amount);
+        if (t.type === 'income') {
+          if (t.paid_by === 'Grzegorz') incG += val;
+          else incA += val;
+        } else {
+          if (t.paid_by === 'Grzegorz') expG += val;
+          else expA += val;
+
+          if (t.scope === 'shared_split') {
+            if (t.paid_by === 'Grzegorz') sharedPaidG += val;
+            else sharedPaidA += val;
+          }
+        }
+      });
+
+      const totalInc = incG + incA;
+      const totalExp = expG + expA;
+      const balance = totalInc - totalExp;
+      const savingsRate = totalInc > 0 ? Math.round((balance / totalInc) * 100) : 0;
+
+      document.getElementById('kpi-income').textContent = formatPLN(totalInc);
+      document.getElementById('kpi-income-split').textContent = `Grzegorz: ${formatPLN(incG)} | Asia: ${formatPLN(incA)}`;
+
+      document.getElementById('kpi-expense').textContent = formatPLN(totalExp);
+      document.getElementById('kpi-expense-split').textContent = `Grzegorz: ${formatPLN(expG)} | Asia: ${formatPLN(expA)}`;
+
+      const balEl = document.getElementById('kpi-balance');
+      balEl.textContent = formatPLN(balance);
+      balEl.className = 'kpi-value ' + (balance >= 0 ? 'text-emerald' : 'text-rose');
+      document.getElementById('kpi-savings-rate').textContent = `Stopa oszczędności: ${savingsRate}%`;
+
+      // Rozliczenie 50/50 wydatków oznaczonych jako "Wspólny 50/50"
+      const diff = (sharedPaidG - sharedPaidA) / 2;
+      const setEl = document.getElementById('kpi-settlement');
+      const setDetail = document.getElementById('kpi-settlement-detail');
+
+      if (Math.abs(diff) < 0.01) {
+        setEl.textContent = 'Wyrównane';
+        setDetail.textContent = `Wspólne 50/50: ${formatPLN(sharedPaidG + sharedPaidA)}`;
+      } else if (diff > 0) {
+        setEl.textContent = `Asia -> Grzegorz: ${formatPLN(diff)}`;
+        setDetail.textContent = `Grzegorz założył więcej ze wspólnych 50/50`;
+      } else {
+        setEl.textContent = `Grzegorz -> Asia: ${formatPLN(Math.abs(diff))}`;
+        setDetail.textContent = `Asia założyła więcej ze wspólnych 50/50`;
+      }
+
+      // Lista transakcji
+      const filteredTx = monthTx.filter((t) => personFilter === 'ALL' || t.paid_by === personFilter);
+      const txContainer = document.getElementById('tx-list');
+
+      if (filteredTx.length === 0) {
+        txContainer.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem;">Brak operacji w wybranym okresie.</p>';
+      } else {
+        txContainer.innerHTML = filteredTx.map((t) => {
+          const isExp = t.type === 'expense';
+          const badgePerson = t.paid_by === 'Grzegorz' ? 'badge-grzegorz' : 'badge-asia';
+          return `
+            <div class="tx-item">
+              <div class="tx-info">
+                <div class="tx-title">${escapeHtml(t.title)}</div>
+                <div class="tx-meta">
+                  <span>${t.tx_date}</span>
+                  <span>• ${escapeHtml(t.category)}</span>
+                  <span class="badge ${badgePerson}">${t.paid_by}</span>
+                  <span class="badge badge-scope">${SCOPE_LABELS[t.scope] || t.scope}</span>
+                </div>
+              </div>
+              <div class="tx-right">
+                <div class="tx-amount ${isExp ? 'text-rose' : 'text-emerald'}">
+                  ${isExp ? '-' : '+'}${formatPLN(t.amount)}
+                </div>
+                <button type="button" class="btn btn-danger" onclick="deleteTransaction('${t.id}')" title="Usuń">✕</button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      renderEnvelopes(monthTx);
+      renderGoals();
+      if (!document.getElementById('tab-analytics').classList.contains('hidden')) {
+        renderCharts();
+      }
+    }
+
+    // Renderowanie kopert (limitów)
+    function renderEnvelopes(monthTx) {
+      const container = document.getElementById('envelopes-list');
+      const spentMap = {};
+      monthTx.filter(t => t.type === 'expense').forEach(t => {
+        spentMap[t.category] = (spentMap[t.category] || 0) + Number(t.amount);
+      });
+
+      const allCats = new Set([...limits.map(l => l.category), ...Object.keys(spentMap)]);
+      let totalPlanned = 0;
+
+      const html = Array.from(allCats).map(cat => {
+        const limObj = limits.find(l => l.category === cat);
+        const limitVal = limObj ? Number(limObj.monthly_limit) : 0;
+        const spentVal = spentMap[cat] || 0;
+        totalPlanned += limitVal;
+
+        const pct = limitVal > 0 ? Math.min(100, Math.round((spentVal / limitVal) * 100)) : (spentVal > 0 ? 100 : 0);
+        const isOver = limitVal > 0 && spentVal > limitVal;
+        const barColor = isOver ? 'var(--rose)' : (pct > 80 ? 'var(--amber)' : 'var(--emerald)');
+
+        return `
+          <div class="envelope-item">
+            <div class="env-top">
+              <strong>${escapeHtml(cat)}</strong>
+              <span>
+                <span class="${isOver ? 'text-rose' : ''}" style="font-weight:700;">${formatPLN(spentVal)}</span>
+                / ${limitVal > 0 ? formatPLN(limitVal) : 'bez limitu'}
+              </span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: ${pct}%; background: ${barColor};"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('total-planned-label').textContent = `Suma limitów: ${formatPLN(totalPlanned)}`;
+      container.innerHTML = html || '<p style="color: var(--text-muted);">Brak zdefiniowanych kategorii.</p>';
+    }
+
+    // Renderowanie celów oszczędnościowych
+    function renderGoals() {
+      const grid = document.getElementById('goals-grid');
+      if (goals.length === 0) {
+        grid.innerHTML = '<div class="card"><p style="color: var(--text-muted);">Brak celów oszczędnościowych. Dodaj pierwszy cel powyżej (np. Remont Kotulin lub Wesele).</p></div>';
+        return;
+      }
+
+      grid.innerHTML = goals.map(g => {
+        const cur = Number(g.current_amount);
+        const tar = Number(g.target_amount);
+        const pct = tar > 0 ? Math.min(100, Math.round((cur / tar) * 100)) : 0;
+        const left = Math.max(0, tar - cur);
+
+        return `
+          <div class="goal-card">
+            <div style="display:flex; justify-content:space-between; align-items:start; gap:8px; margin-bottom:8px;">
+              <div>
+                <h3 style="font-size:1.05rem;">${escapeHtml(g.name)}</h3>
+                <div style="font-size:0.78rem; color:var(--text-muted);">
+                  ${g.deadline ? 'Termin: ' + g.deadline : 'Cel bezterminowy'} • Pozostało: ${formatPLN(left)}
+                </div>
+              </div>
+              <span class="badge badge-grzegorz">${pct}%</span>
+            </div>
+
+            <div style="font-size:0.92rem; font-weight:700; margin-bottom:8px;">
+              <span class="text-emerald">${formatPLN(cur)}</span> / ${formatPLN(tar)}
+            </div>
+
+            <div class="progress-bar" style="height:12px;">
+              <div class="progress-fill" style="width:${pct}%; background:linear-gradient(90deg, var(--sky), var(--emerald));"></div>
+            </div>
+
+            <div class="goal-actions">
+              <button type="button" class="btn btn-secondary" style="flex:1; padding:8px;" onclick="addGoalFunds('${g.id}', ${cur})">+ Dopłać</button>
+              <button type="button" class="btn btn-danger" onclick="deleteGoal('${g.id}')">Usuń</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Wykresy Chart.js
+    function renderCharts() {
+      const selectedMonth = document.getElementById('month-filter').value;
+      const monthExpenses = transactions.filter(t => t.tx_date && t.tx_date.startsWith(selectedMonth) && t.type === 'expense');
+
+      const byCat = {};
+      let sumG = 0, sumA = 0;
+
+      monthExpenses.forEach(t => {
+        const val = Number(t.amount);
+        byCat[t.category] = (byCat[t.category] || 0) + val;
+        if (t.paid_by === 'Grzegorz') sumG += val;
+        else sumA += val;
+      });
+
+      if (categoryChartInstance) categoryChartInstance.destroy();
+      const ctx1 = document.getElementById('categoryChart').getContext('2d');
+      categoryChartInstance = new Chart(ctx1, {
+        type: 'doughnut',
+        data: {
+          labels: Object.keys(byCat),
+          datasets: [{
+            data: Object.values(byCat),
+            backgroundColor: ['#10b981', '#38bdf8', '#f59e0b', '#f43f5e', '#a78bfa', '#ec4899', '#14b8a6', '#64748b'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'right', labels: { color: '#f1f5f9', font: { size: 12 } } }
+          }
+        }
+      });
+
+      if (personChartInstance) personChartInstance.destroy();
+      const ctx2 = document.getElementById('personChart').getContext('2d');
+      personChartInstance = new Chart(ctx2, {
+        type: 'bar',
+        data: {
+          labels: ['Grzegorz', 'Asia'],
+          datasets: [{
+            label: 'Wydatki w miesiącu (PLN)',
+            data: [sumG, sumA],
+            backgroundColor: ['#38bdf8', '#a78bfa'],
+            borderRadius: 10
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: { ticks: { color: '#94a3b8' }, grid: { color: '#27354f' } },
+            x: { ticks: { color: '#f1f5f9' }, grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    // Eksport CSV do LibreOffice Calc / Excel
+    document.getElementById('export-csv-btn').addEventListener('click', () => {
+      const selectedMonth = document.getElementById('month-filter').value;
+      const monthTx = transactions.filter(t => t.tx_date && t.tx_date.startsWith(selectedMonth));
+
+      const header = ['Data', 'Typ', 'Kwota_PLN', 'Kategoria', 'Opis', 'Osoba', 'Rozliczenie'];
+      const rows = monthTx.map(t => [
+        t.tx_date,
+        t.type === 'expense' ? 'Wydatek' : 'Przychod',
+        String(t.amount).replace('.', ','),
+        `"${t.category}"`,
+        `"${t.title.replace(/"/g, '""')}"`,
+        t.paid_by,
+        `"${SCOPE_LABELS[t.scope] || t.scope}"`
+      ]);
+
+      const csvContent = '\uFEFF' + [header.join(';'), ...rows.map(r => r.join(';'))].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `DuoBudzet_${selectedMonth}.csv`;
+      link.click();
+    });
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // Start aplikacji i sprawdzenie aktywnej sesji
+    (async function boot() {
+      initDefaultDates();
+      if (initSupabase()) {
+        const { data } = await supabaseClient.auth.getSession();
+        if (data?.session?.user) {
+          currentUser = data.session.user;
+          await enterApp();
+        }
+      }
+    })();
+  </script>
+</body>
+</html>
