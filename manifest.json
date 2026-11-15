@@ -1,16 +1,23 @@
 {
+  "id": "/duobudzet/",
   "name": "DuoBudżet — Grzegorz & Asia",
   "short_name": "DuoBudżet",
-  "description": "Wspólny system zarządzania budżetem, wydatkami i celami dla Grzegorza i Asi",
-  "start_url": "./index.html",
+  "description": "Wspólny budżet domowy Grzegorza i Asi",
+  "start_url": "/duobudzet/index.html",
+  "scope": "/duobudzet/",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#0f172a",
-  "orientation": "any",
+  "background_color": "#05110d",
+  "theme_color": "#05110d",
   "icons": [
     {
       "src": "./logo.svg",
-      "sizes": "any",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "./logo.svg",
+      "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any maskable"
     }
