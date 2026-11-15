@@ -1,4 +1,4 @@
-const CACHE_NAME = 'duobudzet-v1';
+const CACHE_NAME = 'duobudzet-v4';
 const ASSETS = [
   './',
   './index.html',
