@@ -5,11 +5,97 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>DuoBudżet — Grzegorz &amp; Asia</title>
   <meta name="theme-color" content="#05110d" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <link rel="manifest" href="./manifest.json" />
-  <link rel="icon" type="image/svg+xml" href="./logo.svg" />
-  <link rel="apple-touch-icon" href="./logo.svg" />
+  <link id="dynamic-manifest" rel="manifest" />
+  <link id="dynamic-icon" rel="icon" type="image/png" />
+  <link id="dynamic-apple-icon" rel="apple-touch-icon" />
+
+  <script>
+    // Automatyczne generowanie ikony PNG 512x512 i pełnoekranowego manifestu PWA w jednym pliku
+    (function setupSingleFilePWA() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 512;
+      const ctx = canvas.getContext('2d');
+
+      const bgGrad = ctx.createLinearGradient(0, 0, 512, 512);
+      bgGrad.addColorStop(0, '#051b14');
+      bgGrad.addColorStop(1, '#0b2e22');
+      ctx.fillStyle = bgGrad;
+      ctx.beginPath();
+      if (ctx.roundRect) {
+        ctx.roundRect(0, 0, 512, 512, 116);
+      } else {
+        ctx.rect(0, 0, 512, 512);
+      }
+      ctx.fill();
+
+      ctx.lineWidth = 28;
+      ctx.strokeStyle = '#10b981';
+      ctx.beginPath();
+      ctx.arc(204, 230, 102, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#a3e635';
+      ctx.beginPath();
+      ctx.arc(308, 230, 102, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.fillStyle = '#ecfdf5';
+      ctx.font = '800 48px system-ui, -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('G & A', 256, 422);
+
+      const pngDataUrl = canvas.toDataURL('image/png');
+      document.getElementById('dynamic-icon').href = pngDataUrl;
+      document.getElementById('dynamic-apple-icon').href = pngDataUrl;
+
+      const manifestObj = {
+        name: 'DuoBudżet — Grzegorz & Asia',
+        short_name: 'DuoBudżet',
+        description: 'Wspólny budżet domowy Grzegorza i Asi',
+        start_url: window.location.href.split('#')[0],
+        scope: window.location.origin + window.location.pathname.replace(/\/[^/]*$/, '/'),
+        display: 'standalone',
+        background_color: '#05110d',
+        theme_color: '#05110d',
+        icons: [
+          {
+            src: pngDataUrl,
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: pngDataUrl,
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any maskable'
+          }
+        ]
+      };
+
+      const manifestBlob = new Blob([JSON.stringify(manifestObj)], { type: 'application/manifest+json' });
+      document.getElementById('dynamic-manifest').href = URL.createObjectURL(manifestBlob);
+
+      // Wbudowany Service Worker w pamięci (bez osobnego pliku sw.js)
+      if ('serviceWorker' in navigator) {
+        const swCode = `
+          self.addEventListener('install', (e) => self.skipWaiting());
+          self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
+          self.addEventListener('fetch', (e) => {
+            if (e.request.method !== 'GET') return;
+            e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+          });
+        `;
+        const swBlob = new Blob([swCode], { type: 'application/javascript' });
+        const swUrl = URL.createObjectURL(swBlob);
+        navigator.serviceWorker.register(swUrl).catch(() => {});
+      }
+    })();
+  </script>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
@@ -806,7 +892,6 @@
         </div>
 
         <div class="topbar-controls">
-          <!-- Selektor miesiąca i roku -->
           <div class="period-selector" title="Wybierz miesiąc i rok">
             <button type="button" class="period-nav-btn" id="prev-month-btn" title="Poprzedni miesiąc">◀</button>
             <select id="select-month" class="period-select">
@@ -839,7 +924,7 @@
       <div id="install-banner">
         <div>
           <strong>Zainstaluj DuoBudżet jako aplikację</strong>
-          <div style="font-size: 0.82rem; color: var(--text-muted);">Dodaj zieloną ikonę G &amp; A na pulpit lub ekran telefonu.</div>
+          <div style="font-size: 0.82rem; color: var(--text-muted);">Dodaj zieloną ikonę G &amp; A na ekran telefonu (pełny ekran bez paska przeglądarki).</div>
         </div>
         <button type="button" class="btn btn-primary" style="width: auto;" id="install-pwa-btn">Zainstaluj</button>
       </div>
@@ -884,7 +969,6 @@
       <!-- ZAKŁADKA 1: PULPIT I TRANSAKCJE -->
       <div id="tab-overview" class="tab-content">
         <div class="main-grid">
-          <!-- Formularz dodawania -->
           <div class="card">
             <div class="card-header">
               <h2 class="card-title">Nowy wpis</h2>
@@ -930,7 +1014,6 @@
                 </select>
               </div>
 
-              <!-- Sekcja dowolnego podziału procentowego -->
               <div id="expense-split-section" class="split-box">
                 <label style="display:block; font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:8px;">
                   Podział kosztu (kogo obciąża wydatek)
@@ -966,7 +1049,6 @@
             </form>
           </div>
 
-          <!-- Lista transakcji -->
           <div class="card">
             <div class="card-header">
               <div>
@@ -1252,14 +1334,6 @@
       'Inny przychód'
     ];
 
-    // Rejestracja Service Workera (PWA)
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').catch(() => {});
-      });
-    }
-
-    // Obsługa przycisku instalacji aplikacji z Chrome
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredInstallPrompt = e;
@@ -1384,7 +1458,6 @@
       document.getElementById('supabase-config-fields').classList.toggle('hidden');
     });
 
-    // Logowanie przez Supabase Auth
     document.getElementById('login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const errorBox = document.getElementById('auth-error');
@@ -1469,7 +1542,7 @@
         .subscribe();
     }
 
-    // ==================== WYZEROWANIE APLIKACJI (ZABEZPIECZONE) ====================
+    // Wyzerowanie aplikacji
     const resetModal = document.getElementById('reset-modal');
     const resetInput = document.getElementById('reset-confirm-input');
     const confirmResetBtn = document.getElementById('confirm-reset-btn');
@@ -1495,7 +1568,6 @@
       confirmResetBtn.disabled = true;
       confirmResetBtn.textContent = 'Czyszczenie...';
 
-      // Usunięcie wszystkich transakcji i celów
       await supabaseClient.from('budget_transactions').delete().neq('id', '00000000-0000-0000-0000-000000000000');
       await supabaseClient.from('budget_goals').delete().neq('id', '00000000-0000-0000-0000-000000000000');
 
@@ -1509,7 +1581,7 @@
       await loadAllData();
     });
 
-    // Przełączanie typu: Wydatek / Przychód (Nowy wpis)
+    // Przełączanie typu: Wydatek / Przychód
     document.getElementById('btn-type-expense').addEventListener('click', () => {
       document.getElementById('tx-type').value = 'expense';
       document.getElementById('btn-type-expense').className = 'active-expense';
@@ -1526,7 +1598,7 @@
       populateCategorySelects();
     });
 
-    // Obsługa podziału procentowego (Nowy wpis)
+    // Obsługa podziału procentowego
     const shareGInput = document.getElementById('share-grzegorz');
     const shareAInput = document.getElementById('share-asia');
     const amountInput = document.getElementById('tx-amount');
@@ -1589,7 +1661,6 @@
       datalist.innerHTML = expenseCats.map(c => `<option value="${escapeHtml(c)}">`).join('');
     }
 
-    // Szybkie dodawanie nowej kategorii przyciskiem "+"
     document.getElementById('quick-add-cat-btn').addEventListener('click', async () => {
       const newCat = prompt('Podaj nazwę nowej kategorii (np. Ubrania, Prezenty, Materiały):');
       if (!newCat || !newCat.trim()) return;
@@ -1608,7 +1679,6 @@
       document.getElementById('tx-category').value = cleanName;
     });
 
-    // Dodawanie transakcji
     document.getElementById('tx-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const type = document.getElementById('tx-type').value;
@@ -1649,7 +1719,7 @@
       await loadAllData();
     }
 
-    // ==================== EDYCJA TRANSAKCJI PO KLIKNIĘCIU W KAFELEK ====================
+    // Edycja transakcji po kliknięciu w kafelek
     function populateEditCategorySelect(type, selectedCat) {
       const editCatSelect = document.getElementById('edit-tx-category');
       const list = type === 'expense' ? [...getExpenseCategoriesList()] : [...INCOME_CATEGORIES];
@@ -1782,7 +1852,6 @@
       await loadAllData();
     });
 
-    // Zapisywanie nowej kategorii i limitu
     document.getElementById('limit-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const category = document.getElementById('limit-category').value.trim();
@@ -1808,7 +1877,6 @@
       await loadAllData();
     }
 
-    // Dodawanie celu oszczędnościowego
     document.getElementById('goal-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const name = document.getElementById('goal-name').value.trim();
@@ -1850,7 +1918,6 @@
       await loadAllData();
     });
 
-    // Modal dopłaty do celu oszczędnościowego
     function openDepositModal(goalId, goalName) {
       document.getElementById('deposit-goal-id').value = goalId;
       document.getElementById('deposit-goal-title').textContent = goalName;
@@ -1912,7 +1979,6 @@
       await loadAllData();
     }
 
-    // Nawigacja między zakładkami
     document.querySelectorAll('.tab-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('active'));
@@ -1925,12 +1991,10 @@
 
     document.getElementById('filter-person').addEventListener('change', renderAll);
 
-    // Główne renderowanie widoku
     function renderAll() {
       const selectedMonth = getSelectedYearMonth();
       const personFilter = document.getElementById('filter-person').value;
 
-      // 1. Podsumowanie WSZYSTKICH miesięcy
       let allInc = 0, allExp = 0;
       transactions.forEach(t => {
         const val = Number(t.amount);
@@ -1943,7 +2007,6 @@
       allEl.className = 'kpi-value ' + (allNet >= 0 ? 'text-lime' : 'text-rose');
       document.getElementById('kpi-alltime-detail').textContent = `Przychody: ${formatPLN(allInc)} | Wydatki: ${formatPLN(allExp)}`;
 
-      // 2. Podsumowanie WYBRANEGO miesiąca
       const monthTx = transactions.filter((t) => t.tx_date && t.tx_date.startsWith(selectedMonth));
 
       let incG = 0, incA = 0, expG = 0, expA = 0;
@@ -1999,7 +2062,6 @@
         setDetail.textContent = 'Różnica wynikająca z podziału wydatków';
       }
 
-      // Lista transakcji (klikalne kafelki)
       const filteredTx = monthTx.filter((t) => personFilter === 'ALL' || t.paid_by === personFilter);
       const txContainer = document.getElementById('tx-list');
 
@@ -2237,7 +2299,6 @@
       });
     }
 
-    // Eksport CSV
     document.getElementById('export-csv-btn').addEventListener('click', () => {
       const selectedMonth = getSelectedYearMonth();
       const monthTx = transactions.filter(t => t.tx_date && t.tx_date.startsWith(selectedMonth));
